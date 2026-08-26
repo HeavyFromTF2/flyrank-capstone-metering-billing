@@ -5,6 +5,7 @@ const app = express();
 
 app.use(express.json());
 app.use('/', require('./routes/generate'));
+app.use('/', require('./routes/checkout'));
 
 const PORT = process.env.PORT || 3000;
 
