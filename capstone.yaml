@@ -1,0 +1,46 @@
+name: flyrank-capstone-metering-billing
+track: backend
+capstone: Usage Metering & Billing Engine
+
+run: docker compose up -d && npm install && npm start
+seed: npm run seed
+test: npm test
+base_url: http://localhost:3000
+
+endpoints:
+  - method: POST
+    path: /generate
+    description: >
+      Dummy billable action. Requires an Idempotency-Key header and a
+      tenantId in the body. Records exactly one usage_event per key,
+      checks subscription status (402 if not active) then quota
+      (429 if over the plan limit).
+
+  - method: GET
+    path: /usage
+    description: >
+      Rolls up this month's usage for a tenant into used / limit / costCents,
+      per usage type (api_call, ai_tokens). Query param: tenantId.
+
+  - method: POST
+    path: /checkout
+    description: >
+      Creates a Stripe test-mode Checkout session (subscription mode) for a
+      tenant to upgrade to Pro. Body: tenantId.
+
+  - method: POST
+    path: /webhooks/stripe
+    description: >
+      Verifies the Stripe signature (400 on failure), deduplicates by
+      event.id, and syncs tenant plan/subscription_status on
+      checkout.session.completed, customer.subscription.updated, and
+      customer.subscription.deleted.
+
+  - method: GET
+    path: /health
+    description: Liveness check.
+
+notes: >
+  AI usage is simulated — no model is called, only token counts are metered.
+  Stripe runs in test mode only; use the Stripe CLI (stripe listen
+  --forward-to localhost:3000/webhooks/stripe) to receive webhooks locally.

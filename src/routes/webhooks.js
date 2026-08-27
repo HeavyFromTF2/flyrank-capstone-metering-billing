@@ -62,8 +62,11 @@ router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async
     if (event.type === 'customer.subscription.deleted') {
         const subscription = event.data.object;
 
+        // subscription_status = 'active' here on purpose: the free plan doesn't
+        // require a Stripe subscription, so cancellation should return the tenant
+        // to a normal, usable free tier — not leave them permanently 402'd.
         const result = await pool.query(
-            `UPDATE tenants SET plan = 'free', subscription_status = 'canceled', stripe_subscription_id = NULL
+            `UPDATE tenants SET plan = 'free', subscription_status = 'active', stripe_subscription_id = NULL
              WHERE stripe_subscription_id = $1 RETURNING id`,
             [subscription.id]
         );
