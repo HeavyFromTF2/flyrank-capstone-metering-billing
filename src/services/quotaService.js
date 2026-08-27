@@ -8,9 +8,12 @@ const LIMITS = {
 
 // Checks if a tenant can make this usage request without going over their plan limit
 async function checkQuota(tenantId, type, requestedQty) {
-  // Get the tenant's current plan
-  const tenantResult = await pool.query('SELECT plan FROM tenants WHERE id = $1', [tenantId]);
-  const plan = tenantResult.rows[0].plan;
+  // Get the tenant's current plan AND subscription_status
+  const tenantResult = await pool.query(
+    'SELECT plan, subscription_status FROM tenants WHERE id = $1',
+    [tenantId]
+  );
+  const { plan, subscription_status: subscriptionStatus } = tenantResult.rows[0];
   const limit = LIMITS[plan][type];
 
   // Sum how much this tenant already used this month
@@ -25,7 +28,7 @@ async function checkQuota(tenantId, type, requestedQty) {
   // Would this request push them over the limit?
   const allowed = (used + requestedQty) <= limit;
 
-  return { allowed, used, limit, plan };
+  return { allowed, used, limit, plan, subscriptionStatus };
 }
 
 module.exports = { checkQuota, LIMITS };
