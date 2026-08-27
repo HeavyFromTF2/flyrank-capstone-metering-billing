@@ -4,6 +4,8 @@ CREATE TABLE tenants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   plan TEXT NOT NULL DEFAULT 'free',
+  subscription_status TEXT NOT NULL DEFAULT 'active',
+  stripe_subscription_id TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 

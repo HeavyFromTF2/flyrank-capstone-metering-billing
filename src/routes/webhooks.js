@@ -3,7 +3,6 @@ const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const pool = require('../db/pool');
 
-// express.raw() keeps the body as raw bytes — required for signature verification
 router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
     const signature = req.headers['stripe-signature'];
     let event;
@@ -22,11 +21,10 @@ router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async
         [event.id]
     );
     if (alreadyProcessed.rows.length > 0) {
-        // Not an error — just acknowledge and do nothing, this is a Stripe retry/replay
         return res.status(200).json({ received: true, duplicate: true });
     }
 
-    // Step 3: handle the event types we care about
+    // Step 3a: checkout finished — upgrade the tenant and remember their subscription id
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
         const tenantId = session.metadata?.tenantId;
@@ -34,15 +32,47 @@ router.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async
         if (!tenantId) {
             console.warn('checkout.session.completed received without tenantId in metadata — skipping');
         } else {
-            await pool.query('UPDATE tenants SET plan = $1 WHERE id = $2', ['pro', tenantId]);
+            // Saving subscription id here so later events (updated/deleted) can find this tenant
+            await pool.query(
+                'UPDATE tenants SET plan = $1, subscription_status = $2, stripe_subscription_id = $3 WHERE id = $4',
+                ['pro', 'active', session.subscription, tenantId]
+            );
             console.log(`Tenant ${tenantId} upgraded to pro`);
         }
     }
 
+    // Step 3b: subscription changed (payment failed, renewed, etc.) — mirror Stripe's status
+    if (event.type === 'customer.subscription.updated') {
+        const subscription = event.data.object;
+
+        // No tenantId in this event, so look up the tenant by the subscription id we saved earlier
+        const result = await pool.query(
+            'UPDATE tenants SET subscription_status = $1 WHERE stripe_subscription_id = $2 RETURNING id',
+            [subscription.status, subscription.id]
+        );
+
+        if (result.rows.length === 0) {
+            console.warn(`subscription.updated for unknown subscription ${subscription.id} — skipping`);
+        } else {
+            console.log(`Tenant ${result.rows[0].id} subscription status updated to ${subscription.status}`);
+        }
+    }
+
+    // Step 3c: subscription cancelled — downgrade the tenant back to free
     if (event.type === 'customer.subscription.deleted') {
-        // A subscription was cancelled — downgrade back to free
-        // (Note: matching tenant to subscription needs stripe_subscription_id stored on the tenant —
-        // we'll wire that up when we save it during checkout.session.completed)
+        const subscription = event.data.object;
+
+        const result = await pool.query(
+            `UPDATE tenants SET plan = 'free', subscription_status = 'canceled', stripe_subscription_id = NULL
+             WHERE stripe_subscription_id = $1 RETURNING id`,
+            [subscription.id]
+        );
+
+        if (result.rows.length === 0) {
+            console.warn(`subscription.deleted for unknown subscription ${subscription.id} — skipping`);
+        } else {
+            console.log(`Tenant ${result.rows[0].id} downgraded to free (subscription cancelled)`);
+        }
     }
 
     // Step 4: mark this event as processed, so a retry of the same event is ignored
