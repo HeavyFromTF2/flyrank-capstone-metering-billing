@@ -1,3 +1,9 @@
+/*
+ * POST /webhooks/stripe — verifies the signature, drops already-seen
+ * events, then syncs the tenant's plan/status for the 3 event types this
+ * service cares about. Payment truth lives at Stripe; this only mirrors it.
+ */
+
 const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);

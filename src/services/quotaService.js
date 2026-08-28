@@ -1,3 +1,8 @@
+/*
+ * Reads a tenant's plan/status and this month's usage, and answers whether
+ * a new request would fit under the plan limit. Doesn't write anything.
+ */
+
 const pool = require('../db/pool');
 
 // Plan limits in one place

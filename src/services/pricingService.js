@@ -1,3 +1,8 @@
+/*
+ * Turns raw token/call counts into cents. Constants live in config/pricing.js
+ * so they can be pinned and tested separately from this math.
+ */
+
 const { TOKENS_PER_MILLION, TOKEN_PRICE_CENTS_PER_MILLION, API_CALL_PRICE_CENTS } = require('../config/pricing');
 
 // Converts token usage into cost in cents. Reasoning tokens are billed as output tokens.

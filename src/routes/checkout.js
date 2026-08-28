@@ -1,8 +1,13 @@
+/*
+ * POST /checkout — creates a Stripe Checkout session so a tenant can
+ * upgrade to Pro. Doesn't touch the tenant's plan directly; that only
+ * happens once the checkout.session.completed webhook arrives.
+ */
+
 const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// Creates a Stripe Checkout session for the tenant to upgrade to Pro
 router.post('/checkout', async (req, res) => {
   const { tenantId } = req.body;
 

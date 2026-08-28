@@ -1,3 +1,8 @@
+/*
+ * Pricing constants only — no calculation logic here, so the numbers can be
+ * pinned and tested on their own (see tests/pricingService.test.js).
+ */
+
 // Prices as integers (cents per 1M tokens) — never floats, as the PDF rule says
 const TOKENS_PER_MILLION = 1_000_000;
 

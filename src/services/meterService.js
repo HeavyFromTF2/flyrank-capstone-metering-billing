@@ -1,3 +1,8 @@
+/*
+ * Idempotent usage recording. Uniqueness is enforced at the DB level
+ * (tenant_id + idempotency_key), not in application code.
+ */
+
 const pool = require('../db/pool');
 
 // Records usage for a tenant. Same idempotencyKey twice = only 1 row ever created.

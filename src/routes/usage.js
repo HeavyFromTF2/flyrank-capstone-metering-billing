@@ -1,10 +1,14 @@
+/*
+ * GET /usage?tenantId=... — rolls up this month's usage into
+ * { used, limit, cost } per usage type. Reuses checkQuota() rather than
+ * writing a separate query.
+ */
+
 const express = require('express');
 const router = express.Router();
 const { checkQuota } = require('../services/quotaService');
 const { calculateApiCallCostCents, calculateTokenCostCents } = require('../services/pricingService');
 
-// GET /usage?tenantId=...
-// Rolls up this month's usage into { used, limit, cost } per usage type
 router.get('/usage', async (req, res) => {
   const { tenantId } = req.query;
 

@@ -1,3 +1,8 @@
+/*
+ * Boundary test: 999 used + 1 more is allowed (exactly at the limit),
+ * 1000 used + 1 more is blocked (one over).
+ */
+
 require('dotenv').config();
 const pool = require('../src/db/pool');
 const { recordUsage } = require('../src/services/meterService');

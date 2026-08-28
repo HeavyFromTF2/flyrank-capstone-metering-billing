@@ -1,3 +1,9 @@
+/*
+ * Covers the two webhook probes from the brief: a forged signature gets
+ * rejected, and the same event.id sent twice is only processed once.
+ * dotenv loads first so Stripe() below doesn't get an undefined API key.
+ */
+
 require('dotenv').config();
 
 const request = require('supertest');

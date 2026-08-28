@@ -1,3 +1,8 @@
+/*
+ * Proves the idempotency guarantee: same idempotencyKey sent twice creates
+ * exactly one usage_events row.
+ */
+
 require('dotenv').config();
 const pool = require('../src/db/pool');
 const { recordUsage } = require('../src/services/meterService');

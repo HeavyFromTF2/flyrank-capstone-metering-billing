@@ -1,3 +1,8 @@
+/*
+ * Pinned cost-math tests — expected values are hand-calculated, not derived
+ * from the code under test, so a wrong implementation can't pass by copying itself.
+ */
+
 const { calculateTokenCostCents, calculateApiCallCostCents } = require('../src/services/pricingService');
 
 // Pinned values — hand-calculated, not derived from the code itself

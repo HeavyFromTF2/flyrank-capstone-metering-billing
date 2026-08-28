@@ -1,3 +1,9 @@
+/*
+ * Idempotent demo-data seed. Creates 3 fixed tenants (near-quota, past-due,
+ * fresh free) used for the manual probes in EVIDENCE.md and the demo.
+ * Safe to re-run — wipes its own previous output first.
+ */
+
 require('dotenv').config();
 const pool = require('../src/db/pool');
 
